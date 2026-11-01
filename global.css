@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Capa base (sólo tiene efecto en web; en nativo estos selectores se ignoran).
+  Las variables de color viven en tailwind.config.js (plugin addBase).
+*/
+@layer base {
+  html {
+    color-scheme: dark;
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100%;
+    color: rgb(var(--color-fg));
+    font-family: 'Geist_400Regular', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* Glow ambiental muy sutil: da algo que desenfocar detrás de las glass cards. */
+    background:
+      radial-gradient(1100px 560px at 88% -12%, rgb(16 185 129 / 0.09), transparent 62%),
+      radial-gradient(800px 480px at -8% 112%, rgb(245 158 11 / 0.045), transparent 58%),
+      rgb(var(--color-bg));
+    background-attachment: fixed;
+  }
+
+  #root {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* WCAG 2.4.7 / 2.4.13: foco siempre visible (teclado en PC / lector USB). */
+  body *:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgb(var(--color-primary) / 0.35);
+  }
+
+  /* Alta densidad en reportes: scrollbars finas y discretas. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(148 163 184 / 0.35) transparent;
+  }
+
+  /* Los inputs numéricos de caja no deben mostrar spinners. */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* WCAG 2.3.3: respetar "reducir movimiento". */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
