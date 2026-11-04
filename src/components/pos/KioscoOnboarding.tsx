@@ -24,14 +24,16 @@ export function KioscoOnboarding() {
   };
 
   return (
-    <Card glass className="mx-auto w-full max-w-[520px] gap-4 p-5">
+    <Card className="mx-auto w-full max-w-[520px] gap-4 p-5">
       <View className="flex-row items-center gap-3">
-        <View className="h-11 w-11 items-center justify-center rounded-xl bg-primary/15">
-          <Feather name="shopping-bag" size={20} color={palette.primary} />
+        <View className="h-11 w-11 items-center justify-center border-[3px] border-black bg-accent">
+          <Feather name="shopping-bag" size={20} color={palette.ink} />
         </View>
         <View className="flex-1 gap-0.5">
-          <Text className="font-heading text-lg text-fg">Creá tu kiosco</Text>
-          <Text className="font-body text-xs text-muted">Es el espacio donde viven caja, stock y ventas.</Text>
+          <Text className="font-pixel text-pixel-xs uppercase text-fg">Creá tu kiosco</Text>
+          <Text className="font-body text-xs text-muted">
+            Es el espacio donde viven caja, stock, cuaderno y ventas.
+          </Text>
         </View>
       </View>
 

@@ -2,22 +2,26 @@ import { Text, View } from 'react-native';
 
 import { cn } from '@/lib/cn';
 
-type Tone = 'neutral' | 'primary' | 'accent' | 'danger' | 'muted';
+type Tone = 'neutral' | 'primary' | 'accent' | 'danger' | 'muted' | 'pink' | 'orange';
 
 const TONES: Record<Tone, string> = {
-  neutral: 'border-line bg-elevated',
-  primary: 'border-primary/30 bg-primary/10',
-  accent: 'border-accent/30 bg-accent/10',
-  danger: 'border-danger/30 bg-danger/10',
-  muted: 'border-line bg-bg/60',
+  neutral: 'border-black bg-elevated',
+  primary: 'border-black bg-success',
+  accent: 'border-black bg-accent',
+  danger: 'border-black bg-[#FCA5A5]',
+  muted: 'border-black bg-bg',
+  pink: 'border-black bg-pink',
+  orange: 'border-black bg-orange',
 };
 
 const TEXT_TONES: Record<Tone, string> = {
   neutral: 'text-fg',
-  primary: 'text-primary-ink',
-  accent: 'text-accent-ink',
-  danger: 'text-danger-ink',
+  primary: 'text-ink',
+  accent: 'text-ink',
+  danger: 'text-[#5B0A0A]',
   muted: 'text-muted',
+  pink: 'text-ink',
+  orange: 'text-ink',
 };
 
 type BadgeProps = {
@@ -29,8 +33,14 @@ type BadgeProps = {
 
 export function Badge({ children, tone = 'neutral', className, textClassName }: BadgeProps) {
   return (
-    <View className={cn('rounded-full border px-2 py-0.5', TONES[tone], className)}>
-      <Text className={cn('font-body-semibold text-2xs uppercase tracking-wide', TEXT_TONES[tone], textClassName)}>
+    <View className={cn('rounded-none border-2 px-1.5 py-0.5', TONES[tone], className)}>
+      <Text
+        className={cn(
+          'font-pixel text-pixel-2xs uppercase tracking-wide',
+          TEXT_TONES[tone],
+          textClassName,
+        )}
+      >
         {children}
       </Text>
     </View>

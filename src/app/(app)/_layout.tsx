@@ -25,13 +25,13 @@ export default function AppLayout() {
             sceneStyle: { backgroundColor: palette.bg },
             tabBarStyle: desktop
               ? { display: 'none' }
-              : { height: 58 + insets.bottom, backgroundColor: 'transparent', borderTopWidth: 0 },
+              : { height: 62 + insets.bottom, backgroundColor: 'transparent', borderTopWidth: 0 },
           }}
         >
           <Tabs.Screen name="index" options={{ title: 'Caja' }} />
           <Tabs.Screen name="productos" options={{ title: 'Productos' }} />
-          <Tabs.Screen name="escaner" options={{ title: 'Escáner' }} />
-          <Tabs.Screen name="reportes" options={{ title: 'Reportes' }} />
+          <Tabs.Screen name="cuaderno" options={{ title: 'Cuaderno' }} />
+          <Tabs.Screen name="estadisticas" options={{ title: 'Estadísticas' }} />
           <Tabs.Screen name="ajustes" options={{ title: 'Ajustes' }} />
           <Tabs.Screen name="caja" options={{ title: 'Turno', href: null }} />
         </Tabs>

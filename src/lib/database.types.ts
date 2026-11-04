@@ -10,6 +10,8 @@ export type MetodoPago = 'efectivo' | 'debito' | 'credito' | 'transferencia' | '
 export type EstadoVenta = 'completada' | 'anulada';
 export type EstadoCaja = 'abierta' | 'cerrada';
 export type TipoMovStock = 'inicial' | 'venta' | 'anulacion' | 'compra' | 'ajuste';
+export type TipoCuaderno = 'cliente' | 'proveedor';
+export type TipoMovCuaderno = 'cargo' | 'pago' | 'ajuste';
 
 export type KioscoRow = {
   id: string;
@@ -80,6 +82,33 @@ export type VentaRow = {
   motivo_anulacion: string | null;
   usuario_id: string | null;
   notas: string | null;
+  cliente_id: string | null;
+  es_fiado: boolean;
+  created_at: string;
+};
+
+export type CuadernoContactoRow = {
+  id: string;
+  kiosco_id: string;
+  tipo: TipoCuaderno;
+  nombre: string;
+  telefono: string | null;
+  saldo_fiado: number;
+  notas: string | null;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CuadernoMovimientoRow = {
+  id: string;
+  kiosco_id: string;
+  contacto_id: string;
+  tipo: TipoMovCuaderno;
+  monto: number;
+  descripcion: string | null;
+  venta_id: string | null;
+  usuario_id: string | null;
   created_at: string;
 };
 
@@ -271,6 +300,8 @@ export type Database = {
           motivo_anulacion?: string | null;
           usuario_id?: string | null;
           notas?: string | null;
+          cliente_id?: string | null;
+          es_fiado?: boolean;
           created_at?: string;
         },
         Partial<{
@@ -278,6 +309,8 @@ export type Database = {
           anulada_at: string | null;
           anulada_por: string | null;
           motivo_anulacion: string | null;
+          cliente_id: string | null;
+          es_fiado: boolean;
         }>
       >;
       venta_items: Table<
@@ -381,6 +414,43 @@ export type Database = {
         },
         Partial<{ activa: boolean; revoked_at: string | null }>
       >;
+      cuaderno_contactos: Table<
+        CuadernoContactoRow,
+        {
+          id?: string;
+          kiosco_id: string;
+          tipo: TipoCuaderno;
+          nombre: string;
+          telefono?: string | null;
+          saldo_fiado?: number;
+          notas?: string | null;
+          activo?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        },
+        Partial<{
+          nombre: string;
+          telefono: string | null;
+          saldo_fiado: number;
+          notas: string | null;
+          activo: boolean;
+        }>
+      >;
+      cuaderno_movimientos: Table<
+        CuadernoMovimientoRow,
+        {
+          id?: string;
+          kiosco_id: string;
+          contacto_id: string;
+          tipo: TipoMovCuaderno;
+          monto: number;
+          descripcion?: string | null;
+          venta_id?: string | null;
+          usuario_id?: string | null;
+          created_at?: string;
+        },
+        never
+      >;
     };
     Views: { [_ in never]: never };
     Functions: {
@@ -412,8 +482,29 @@ export type Database = {
           p_descuento?: number;
           p_monto_recibido?: number | null;
           p_notas?: string | null;
+          p_cliente_id?: string | null;
         };
         Returns: VentaRow;
+      };
+      registrar_movimiento_cuaderno: {
+        Args: {
+          p_contacto_id: string;
+          p_tipo: TipoMovCuaderno;
+          p_monto: number;
+          p_descripcion?: string | null;
+        };
+        Returns: CuadernoContactoRow;
+      };
+      estadisticas_negocio: {
+        Args: {
+          p_kiosco_id: string;
+          p_desde: string;
+          p_hasta: string;
+          p_comp_desde?: string | null;
+          p_comp_hasta?: string | null;
+          p_dias_stock?: number;
+        };
+        Returns: Json;
       };
       anular_venta: {
         Args: { p_venta_id: string; p_motivo: string };

@@ -16,6 +16,15 @@ export function metodoPagoLabel(metodo: MetodoPago): string {
 }
 
 /**
+ * Igual que `metodoPagoLabel`, pero acepta strings: Estadísticas agrega el
+ * valor virtual `fiado`, que no existe en el enum de Postgres.
+ */
+export function metodoPagoUiLabel(metodo: string): string {
+  if (metodo === 'fiado') return 'Fiado';
+  return METHOD_LABELS[metodo as MetodoPago] ?? metodo;
+}
+
+/**
  * Formatea dinero con Intl (Hermes incluye ICU). Si falla, cae a un formato
  * manual es-AR para no romper la caja.
  */

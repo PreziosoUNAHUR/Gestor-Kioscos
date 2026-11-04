@@ -100,22 +100,21 @@ export function PairingModal({
       {activating && !session ? <Spinner compact label="Generando código…" /> : null}
 
       {session ? (
-        <View className="items-center gap-2 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-5">
-          <Text className="font-body-medium text-2xs uppercase tracking-wide text-muted">Código de vinculación</Text>
-          <Text
-            selectable
-            className="font-mono-bold text-[40px] tracking-[6px] text-primary-ink"
-          >
+        <View className="items-center gap-2 border-[3px] border-black bg-[#DCFCE7] px-4 py-5">
+          <Text className="font-pixel text-pixel-2xs uppercase text-[#14532D]">
+            Código de vinculación
+          </Text>
+          <Text selectable className="font-mono-bold text-[40px] tracking-[6px] text-[#14532D]">
             {splitCode(session.codigo)}
           </Text>
-          <Text className="font-body text-2xs text-muted">
+          <Text className="font-body text-2xs text-[#14532D]">
             {hostActive
               ? `Vence el ${formatDateTime(session.expiraAt)} · sólo miembros del kiosco`
               : 'Sesión pausada'}
           </Text>
         </View>
       ) : (
-        <View className="items-center gap-2 rounded-2xl border border-dashed border-line px-4 py-6">
+        <View className="items-center gap-2 border-[3px] border-dashed border-black bg-elevated px-4 py-6">
           <Feather name="wifi-off" size={22} color={palette.muted} />
           <Text className="text-center font-body text-sm text-muted">
             Activá la vinculación para que esta PC escuche los escaneos del celular.
@@ -123,11 +122,12 @@ export function PairingModal({
         </View>
       )}
 
-      <View className="gap-2 rounded-xl border border-line bg-bg/40 p-3">
-        <Text className="font-body-semibold text-xs text-fg">Cómo conectar el celular</Text>
+      <View className="gap-2 border-[3px] border-black bg-elevated p-3">
+        <Text className="font-pixel text-pixel-2xs uppercase text-fg">Cómo conectar el celular</Text>
         <Text className="font-body text-xs leading-5 text-muted">
           1. Abrí Gestor Kioscos en el celular con la misma cuenta.{'\n'}
-          2. Entrá a <Text className="text-fg">Escáner</Text> y escribí el código.{'\n'}
+          2. Entrá a <Text className="font-body-semibold text-fg">Ajustes → Escáner remoto</Text> y
+          escribí el código.{'\n'}
           3. La cámara agrega los productos acá, con confirmación en pantalla.
         </Text>
       </View>

@@ -19,7 +19,9 @@ export const Input = forwardRef<ComponentRef<typeof TextInput>, InputProps>(func
 ) {
   return (
     <View className={cn('w-full gap-1.5', containerClassName)}>
-      {label ? <Text className="font-body-medium text-xs text-muted">{label}</Text> : null}
+      {label ? (
+        <Text className="font-pixel text-pixel-2xs uppercase tracking-wide text-fg">{label}</Text>
+      ) : null}
 
       <View className="relative w-full justify-center">
         <TextInput
@@ -27,9 +29,9 @@ export const Input = forwardRef<ComponentRef<typeof TextInput>, InputProps>(func
           placeholderTextColor={palette.muted}
           selectionColor={palette.primary}
           className={cn(
-            'w-full rounded-xl border bg-bg/60 px-3 py-2.5 font-body text-base text-fg',
+            'w-full rounded-none border-[3px] bg-elevated px-3 py-2 font-body text-base text-fg',
             multiline ? 'min-h-[88px]' : 'min-h-touch',
-            error ? 'border-danger' : 'border-line',
+            error ? 'border-danger' : 'border-black',
             right ? 'pr-11' : '',
             inputClassName,
           )}

@@ -9,6 +9,7 @@ import { Money } from '@/components/ui/Money';
 import { Segmented, type SegmentOption } from '@/components/ui/Segmented';
 import { Spinner } from '@/components/ui/Spinner';
 import type { ProductoRow } from '@/lib/database.types';
+import { pixelPressed, pixelShadow } from '@/lib/retro';
 import { palette } from '@/lib/theme';
 
 type ProductPickerProps = {
@@ -81,16 +82,22 @@ export function ProductPicker({
                   accessibilityRole="button"
                   accessibilityLabel={`Agregar ${producto.nombre}`}
                   onPress={() => onAdd(producto)}
-                  className="min-w-[145px] max-w-[240px] flex-1 basis-[145px] gap-1.5 rounded-xl border border-line bg-surface/60 p-3 active:opacity-80"
+                  style={({ pressed }) => [pixelShadow(3), pressed ? pixelPressed(3) : undefined]}
+                  className="min-w-[145px] max-w-[240px] flex-1 basis-[145px] gap-1.5 rounded-none border-[3px] border-black bg-elevated p-2.5"
                 >
                   <View className="flex-row items-start justify-between gap-2">
-                    <Text className="flex-1 font-body-semibold text-sm text-fg" numberOfLines={2}>
+                    <Text className="flex-1 font-body-semibold text-sm leading-5 text-fg" numberOfLines={2}>
                       {producto.nombre}
                     </Text>
                     <Badge tone={badge.tone}>{badge.label}</Badge>
                   </View>
 
-                  <Money value={producto.precio_venta} currency={currency} size="sm" className="text-primary-ink" />
+                  <Money
+                    value={producto.precio_venta}
+                    currency={currency}
+                    size="sm"
+                    className="text-primary-ink"
+                  />
 
                   {producto.categoria ? (
                     <Text className="font-body text-2xs text-muted" numberOfLines={1}>

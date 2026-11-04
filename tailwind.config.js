@@ -2,56 +2,38 @@
 const plugin = require('tailwindcss/plugin');
 
 /* -------------------------------------------------------------------------- */
-/*  Gestor Kioscos · sistema de diseño                                         */
+/*  Gestor Kioscos · sistema de diseño "Retro UI / Pixel Art"                  */
 /*                                                                             */
-/*  - Dark mode por defecto. El tema claro existe SOLO para reportes: se       */
-/*    activa envolviendo el reporte en <ReportTheme> (clase `.theme-light`).   */
-/*  - Colores como variables CSS en canales "R G B" para que Tailwind pueda    */
-/*    aplicar opacidad (bg-primary/15). Glass y bordes son rgba() completos.   */
-/*  - Los componentes NUNCA usan hex: sólo estos tokens (theme.colors se       */
-/*    reemplaza por completo, no se extiende la paleta por defecto).           */
-/*                                                                             */
-/*  Contraste medido (WCAG 2.2, texto normal ≥ 4.5:1):                         */
-/*   fg / bg 17.7 · muted / bg 7.2 · muted / surface 6.5 · primary / bg 7.3    */
-/*   accent / bg 8.6 · primary-fg sobre primary 7.3 · danger-ink / glass 5.9   */
-/*   (#EF4444 puro da 4.4 sobre glass: sólo para rellenos, bordes e íconos;    */
-/*    el texto de peligro usa `danger-ink` #F87171).                           */
+/*  - Fondo crema, ventanas celestes, barras de título azules y bordes negros  */
+/*    de 3-4 px con sombras duras (sin blur).                                  */
+/*  - La tipografía de títulos/botones es Press Start 2P. El cuerpo usa Geist  */
+/*    para que formularios y tablas sigan siendo legibles.                     */
+/*  - Colores como variables CSS en canales "R G B" para conservar la        */
+/*    compatibilidad con NativeWind y la opacidad (bg-primary/15).             */
 /* -------------------------------------------------------------------------- */
 
 const themes = {
-  dark: {
-    '--color-bg': '15 20 25', //          #0F1419 carbón casi negro
-    '--color-surface': '26 31 38', //     #1A1F26 superficies sólidas
-    '--color-elevated': '35 42 51', //    #232A33 hover / popovers
-    '--color-fg': '248 250 252', //       #F8FAFC texto principal
-    '--color-muted': '148 163 184', //    #94A3B8 texto secundario
-    '--color-primary': '16 185 129', //   #10B981 verde menta
-    '--color-primary-fg': '15 20 25', //  texto sobre relleno primario (7.3:1)
-    '--color-primary-ink': '16 185 129', // texto/ícono primario sobre superficies
-    '--color-accent': '245 158 11', //    #F59E0B amber
-    '--color-accent-ink': '245 158 11',
+  retro: {
+    '--color-bg': '245 230 200', //       #F5E6C8 crema de escritorio
+    '--color-surface': '209 229 240', //  #D1E5F0 ventana celeste
+    '--color-elevated': '255 255 255', // #FFFFFF campos y filas
+    '--color-fg': '26 26 26', //          #1A1A1A tinta
+    '--color-muted': '74 74 74', //       #4A4A4A texto secundario (7.9:1)
+    '--color-primary': '74 144 226', //   #4A90E2 barra de título
+    '--color-primary-fg': '255 255 255',
+    '--color-primary-ink': '24 78 145', // #184E91 azul legible sobre celeste
+    '--color-accent': '250 204 21', //    #FACC15 amarillo
+    '--color-accent-ink': '120 88 0', //  #785800
     '--color-danger': '239 68 68', //     #EF4444
-    '--color-danger-ink': '248 113 113', // #F87171 variante legible para texto
-    '--color-overlay': '5 8 12',
-    '--color-glass': 'rgba(255, 255, 255, 0.05)',
-    '--color-line': 'rgba(255, 255, 255, 0.08)',
-  },
-  light: {
-    '--color-bg': '248 250 252',
-    '--color-surface': '255 255 255',
-    '--color-elevated': '241 245 249',
-    '--color-fg': '15 20 25',
-    '--color-muted': '71 85 105', //      #475569 (7.6:1 sobre blanco)
-    '--color-primary': '16 185 129',
-    '--color-primary-fg': '15 20 25',
-    '--color-primary-ink': '4 120 87', // #047857 (5.5:1 sobre blanco)
-    '--color-accent': '245 158 11',
-    '--color-accent-ink': '180 83 9', //  #B45309 (5.0:1)
-    '--color-danger': '239 68 68',
-    '--color-danger-ink': '185 28 28', // #B91C1C (6.5:1)
-    '--color-overlay': '15 20 25',
-    '--color-glass': 'rgba(255, 255, 255, 0.85)',
-    '--color-line': 'rgba(15, 20, 25, 0.10)',
+    '--color-danger-ink': '160 24 24', // #A01818
+    '--color-success': '74 222 128', //   #4ADE80
+    '--color-success-ink': '20 110 55', //#146E37
+    '--color-pink': '244 114 182', //     #F472B6
+    '--color-orange': '251 146 60', //    #FB923C
+    '--color-ink': '17 17 17', //         #111111 texto sobre botones vivos
+    '--color-overlay': '20 24 28',
+    '--color-glass': '#D1E5F0',
+    '--color-line': '#000000',
   },
 };
 
@@ -61,22 +43,15 @@ module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
 
-  // El tema oscuro vive en `:root` (no en la clase `.dark`). Declarar `class`
-  // evita que el runtime web de NativeWind intente forzar el esquema "media".
   darkMode: 'class',
 
-  // Tailwind purga las clases de `addBase` que no encuentra en el código: los
-  // temas se aplican con nombres de clase dinámicos, así que se fuerzan.
-  safelist: ['theme-dark', 'theme-light'],
+  safelist: ['theme-retro'],
 
-  // `fontWeight` desactivado a propósito: en React Native cada peso es un
-  // archivo/familia distinta (font-heading-bold, font-body-medium…). Combinar
-  // `font-bold` con una familia custom provoca "faux bold" en Android.
+  // En React Native cada peso es una familia distinta; Press Start 2P sólo
+  // tiene 400. Evitamos "faux bold" desactivando fontWeight.
   corePlugins: { fontWeight: false },
 
   theme: {
-    // Breakpoints explícitos (mismos que Tailwind): sm 640 · md 768 (tablet) ·
-    // lg 1024 (desktop) · xl 1280 · 2xl 1536.
     screens: { sm: '640px', md: '768px', lg: '1024px', xl: '1280px', '2xl': '1536px' },
 
     colors: {
@@ -90,6 +65,9 @@ module.exports = {
       overlay: channel('--color-overlay'),
       glass: 'var(--color-glass)',
       line: 'var(--color-line)',
+      ink: channel('--color-ink'),
+      pink: channel('--color-pink'),
+      orange: channel('--color-orange'),
       primary: {
         DEFAULT: channel('--color-primary'),
         fg: channel('--color-primary-fg'),
@@ -99,56 +77,69 @@ module.exports = {
         DEFAULT: channel('--color-accent'),
         ink: channel('--color-accent-ink'),
       },
+      success: {
+        DEFAULT: channel('--color-success'),
+        ink: channel('--color-success-ink'),
+      },
       danger: {
         DEFAULT: channel('--color-danger'),
         ink: channel('--color-danger-ink'),
       },
+      black: '#000000',
+      white: '#FFFFFF',
     },
 
-    borderColor: ({ theme }) => ({ ...theme('colors'), DEFAULT: 'var(--color-line)' }),
+    borderColor: ({ theme }) => ({ ...theme('colors'), DEFAULT: '#000000' }),
 
     extend: {
-      /**
-       * Tipografías (se cargan en src/lib/fonts.ts con los MISMOS nombres).
-       * - heading / KPIs  → Space Grotesk
-       * - body / UI       → Geist (si falla la carga, fonts.ts registra Outfit
-       *                     bajo estos mismos nombres: fallback transparente)
-       * - números/precios → JetBrains Mono (monoespaciada = columnas tabulares)
-       * En nativo sólo se usa el primer valor; en web el resto es stack CSS.
-       */
       fontFamily: {
-        heading: ['SpaceGrotesk_600SemiBold', 'sans-serif'],
-        'heading-medium': ['SpaceGrotesk_500Medium', 'sans-serif'],
-        'heading-bold': ['SpaceGrotesk_700Bold', 'sans-serif'],
+        // Press Start 2P: títulos, botones, navegación, KPIs y códigos.
+        pixel: ['PressStart2P_400Regular', 'monospace'],
+        heading: ['PressStart2P_400Regular', 'monospace'],
+        'heading-medium': ['PressStart2P_400Regular', 'monospace'],
+        'heading-bold': ['PressStart2P_400Regular', 'monospace'],
+        // Cuerpo legible para formularios, tablas y descripciones.
         body: ['Geist_400Regular', 'sans-serif'],
         'body-medium': ['Geist_500Medium', 'sans-serif'],
         'body-semibold': ['Geist_600SemiBold', 'sans-serif'],
         mono: ['JetBrainsMono_400Regular', 'monospace'],
         'mono-medium': ['JetBrainsMono_500Medium', 'monospace'],
         'mono-bold': ['JetBrainsMono_700Bold', 'monospace'],
-        // Sin Inter/Roboto/system: cualquier `font-sans` cae también en Geist.
         sans: ['Geist_400Regular', 'sans-serif'],
       },
 
       fontSize: {
-        '2xs': ['11px', { lineHeight: '14px', letterSpacing: '0.06em' }],
-        kpi: ['32px', { lineHeight: '36px', letterSpacing: '-0.02em' }],
-        'kpi-lg': ['44px', { lineHeight: '48px', letterSpacing: '-0.03em' }],
+        '2xs': ['11px', { lineHeight: '14px', letterSpacing: '0.04em' }],
+        // Escala pixel: pensada para Press Start 2P (no usar en párrafos).
+        'pixel-2xs': ['7px', { lineHeight: '12px', letterSpacing: '0.02em' }],
+        'pixel-xs': ['8px', { lineHeight: '14px', letterSpacing: '0.02em' }],
+        'pixel-sm': ['10px', { lineHeight: '17px', letterSpacing: '0.01em' }],
+        pixel: ['12px', { lineHeight: '20px', letterSpacing: '0' }],
+        'pixel-lg': ['15px', { lineHeight: '24px', letterSpacing: '0' }],
+        'pixel-xl': ['19px', { lineHeight: '30px', letterSpacing: '0' }],
+        kpi: ['24px', { lineHeight: '32px', letterSpacing: '-0.02em' }],
+        'kpi-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.02em' }],
       },
 
-      // Áreas táctiles: WCAG 2.2 exige ≥ 24px (2.5.8); en caja usamos 44/56px.
       spacing: { touch: '44px', 'touch-lg': '56px' },
       minHeight: { touch: '44px', 'touch-lg': '56px' },
       minWidth: { touch: '44px' },
+
+      boxShadow: {
+        pixel: '4px 4px 0px 0px #000000',
+        'pixel-sm': '2px 2px 0px 0px #000000',
+        'pixel-lg': '8px 8px 0px 0px rgba(0,0,0,0.35)',
+        'pixel-xl': '10px 10px 0px 0px rgba(0,0,0,0.35)',
+        none: 'none',
+      },
     },
   },
 
   plugins: [
     plugin(({ addBase }) => {
       addBase({
-        ':root': themes.dark,
-        '.theme-dark': themes.dark,
-        '.theme-light': themes.light,
+        ':root': themes.retro,
+        '.theme-retro': themes.retro,
       });
     }),
   ],

@@ -17,17 +17,13 @@ import { Screen } from '@/components/ui/Screen';
 import { Spinner } from '@/components/ui/Spinner';
 import { Stat } from '@/components/ui/Stat';
 import { useActiveKiosco } from '@/hooks/useKioscoData';
-import type { CajaRow, MetodoPago } from '@/lib/database.types';
+import type { CajaRow } from '@/lib/database.types';
 import { getErrorMessage } from '@/lib/errors';
-import { METODOS_PAGO, formatDateTime, formatMoney, metodoPagoLabel, parseMoneyInput } from '@/lib/format';
+import { formatDateTime, formatMoney, metodoPagoUiLabel, parseMoneyInput } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { palette } from '@/lib/theme';
 import { useCajaStore } from '@/stores/caja';
 import { useKioscoStore } from '@/stores/kiosco';
-
-function metodoLabel(metodo: string): string {
-  return METODOS_PAGO.includes(metodo as MetodoPago) ? metodoPagoLabel(metodo as MetodoPago) : metodo;
-}
 
 function differenceTone(value: number | null): 'primary' | 'accent' | 'danger' | 'neutral' {
   if (value === null) return 'neutral';
@@ -331,7 +327,7 @@ export default function TurnoScreen() {
                 porMetodo.map(({ metodo, total }) => (
                   <View key={metodo} className="gap-1">
                     <View className="flex-row items-center justify-between gap-2">
-                      <Text className="font-body-medium text-xs text-fg">{metodoLabel(metodo)}</Text>
+                      <Text className="font-body-medium text-xs text-fg">{metodoPagoUiLabel(metodo)}</Text>
                       <Money value={total} currency={currency} size="sm" />
                     </View>
                     <View className="h-1.5 overflow-hidden rounded-full bg-bg/60">

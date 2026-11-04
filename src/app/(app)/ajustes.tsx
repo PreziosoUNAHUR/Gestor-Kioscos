@@ -1,9 +1,9 @@
 import Feather from '@expo/vector-icons/Feather';
 import Constants from 'expo-constants';
-import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
+import { EscanerPanel } from '@/components/escaner/EscanerPanel';
 import { Badge } from '@/components/ui/Badge';
 import { Banner } from '@/components/ui/Banner';
 import { Button } from '@/components/ui/Button';
@@ -26,6 +26,15 @@ function shortId(value: string | null | undefined): string {
   if (!value) return '—';
   return `${value.slice(0, 8)}…`;
 }
+
+const MIGRATIONS = [
+  '20261031000000_schema.sql',
+  '20261031000100_realtime_scanner.sql',
+  '20261031000200_scanner_sesiones.sql',
+  '20261031000300_reportes.sql',
+  '20261104000000_cuaderno.sql',
+  '20261104000100_estadisticas.sql',
+];
 
 export default function AjustesScreen() {
   const email = useAuthStore((store) => store.user?.email ?? '');
@@ -54,7 +63,6 @@ export default function AjustesScreen() {
     if (!loaded) void loadKioscos();
   }, [loadKioscos, loaded]);
 
-  // La sesión vencida la cierra el POS al montar; acá alcanza con el flag.
   const scannerActive = Boolean(hostActive && hostSession);
 
   const submitCreate = async () => {
@@ -81,16 +89,16 @@ export default function AjustesScreen() {
       <PageHeader
         eyebrow="Configuración"
         title="Ajustes"
-        subtitle="Kiosco, cuenta y conexión de este dispositivo."
+        subtitle="Kiosco, cuenta, escáner y conexión de este dispositivo."
       />
 
       <View className="gap-4">
         <Card className="gap-3">
           <View className="flex-row items-center justify-between gap-3">
             <View className="flex-1 gap-0.5">
-              <Text className="font-heading text-base text-fg">Tus kioscos</Text>
+              <Text className="font-pixel text-pixel-xs uppercase text-fg">Tus kioscos</Text>
               <Text className="font-body text-xs text-muted">
-                La caja, el stock y los reportes pertenecen al kiosco activo.
+                La caja, el stock, el cuaderno y las estadísticas pertenecen al kiosco activo.
               </Text>
             </View>
             <Button
@@ -141,34 +149,47 @@ export default function AjustesScreen() {
                     accessibilityLabel={`Usar ${kiosco.nombre}`}
                     onPress={() => setActive(kiosco.id)}
                     className={cn(
-                      'flex-row items-center gap-3 rounded-xl border px-3 py-2.5',
-                      active ? 'border-primary/35 bg-primary/10' : 'border-line bg-bg/40',
+                      'flex-row items-center gap-3 border-[3px] px-2.5 py-2',
+                      active ? 'border-black bg-accent' : 'border-black bg-elevated',
                     )}
                   >
                     <View
                       className={cn(
-                        'h-9 w-9 items-center justify-center rounded-lg',
-                        active ? 'bg-primary/15' : 'bg-surface',
+                        'h-9 w-9 items-center justify-center border-2 border-black',
+                        active ? 'bg-white' : 'bg-surface',
                       )}
                     >
                       <Feather
                         name="shopping-bag"
                         size={16}
-                        color={active ? palette.primary : palette.muted}
+                        color={active ? palette.ink : palette.muted}
                       />
                     </View>
 
                     <View className="flex-1 gap-0.5">
-                      <Text className="font-body-semibold text-sm text-fg" numberOfLines={1}>
+                      <Text
+                        className={cn(
+                          'font-body-semibold text-sm',
+                          active ? 'text-ink' : 'text-fg',
+                        )}
+                        numberOfLines={1}
+                      >
                         {kiosco.nombre}
                       </Text>
-                      <Text className="font-body text-2xs text-muted" numberOfLines={1}>
-                        {kiosco.moneda} · {kiosco.zona_horaria} · desde {formatDateTime(kiosco.created_at)}
+                      <Text
+                        className={cn(
+                          'font-body text-2xs',
+                          active ? 'text-ink/80' : 'text-muted',
+                        )}
+                        numberOfLines={1}
+                      >
+                        {kiosco.moneda} · {kiosco.zona_horaria} · desde{' '}
+                        {formatDateTime(kiosco.created_at)}
                       </Text>
                     </View>
 
                     {active ? (
-                      <Badge tone="primary">Activo</Badge>
+                      <Badge tone="neutral">Activo</Badge>
                     ) : (
                       <Feather name="circle" size={16} color={palette.muted} />
                     )}
@@ -181,49 +202,42 @@ export default function AjustesScreen() {
 
         <Card className="gap-3">
           <View className="flex-row items-center justify-between gap-2">
-            <Text className="font-heading text-base text-fg">Escáner remoto</Text>
+            <View className="flex-1 gap-0.5">
+              <Text className="font-pixel text-pixel-xs uppercase text-fg">Escáner remoto</Text>
+              <Text className="font-body text-xs text-muted">
+                Vinculá este dispositivo con la PC para escanear a distancia.
+              </Text>
+            </View>
             <Badge tone={scannerActive ? 'primary' : 'neutral'}>
-              {scannerActive ? 'Activo' : 'Inactivo'}
+              {scannerActive ? 'PC activa' : 'PC inactiva'}
             </Badge>
           </View>
 
           {scannerActive && hostSession ? (
-            <View className="items-center gap-1 rounded-xl border border-primary/25 bg-primary/5 px-4 py-3">
-              <Text className="font-body-medium text-2xs uppercase tracking-wide text-muted">
+            <View className="items-center gap-1 border-[3px] border-black bg-[#DCFCE7] px-4 py-3">
+              <Text className="font-pixel text-pixel-2xs uppercase text-[#14532D]">
                 Código de esta PC
               </Text>
-              <Text selectable className="font-mono-bold text-3xl tracking-[5px] text-primary-ink">
+              <Text
+                selectable
+                className="font-mono-bold text-3xl tracking-[5px] text-[#14532D]"
+              >
                 {hostSession.codigo.slice(0, 3)} {hostSession.codigo.slice(3)}
               </Text>
-              <Text className="font-body text-2xs text-muted">
+              <Text className="font-body text-2xs text-[#14532D]">
                 Vence el {formatDateTime(hostSession.expiraAt)}
               </Text>
             </View>
-          ) : (
-            <Text className="font-body text-xs leading-5 text-muted">
-              No hay una sesión de escáner activa en este dispositivo. El celular puede vender solo,
-              pero para escanear a distancia la PC tiene que estar escuchando.
-            </Text>
-          )}
+          ) : null}
 
-          <Text className="font-body text-2xs leading-5 text-muted">
-            Esta sección es sólo lectura: la sesión se activa, rota y desactiva desde Caja → Escáner.
-          </Text>
-
-          <Button
-            label="Gestionar en Caja"
-            variant="secondary"
-            size="sm"
-            onPress={() => router.push('/')}
-            icon={<Feather name="shopping-bag" size={14} color={palette.fg} />}
-          />
+          <EscanerPanel />
         </Card>
 
         <Card className="gap-3">
-          <Text className="font-heading text-base text-fg">Cuenta</Text>
+          <Text className="font-pixel text-pixel-xs uppercase text-fg">Cuenta</Text>
 
-          <View className="gap-1 rounded-xl border border-line bg-bg/40 px-3 py-2.5">
-            <Text className="font-body-medium text-2xs uppercase tracking-wide text-muted">Email</Text>
+          <View className="gap-1 border-[3px] border-black bg-elevated px-3 py-2.5">
+            <Text className="font-pixel text-pixel-2xs uppercase text-muted">Email</Text>
             <Text className="font-body-semibold text-sm text-fg" numberOfLines={1}>
               {email || 'Sin sesión'}
             </Text>
@@ -235,34 +249,34 @@ export default function AjustesScreen() {
             variant="danger"
             size="sm"
             onPress={() => setSignOutOpen(true)}
-            icon={<Feather name="log-out" size={14} color={palette.primaryFg} />}
+            icon={<Feather name="log-out" size={14} color="#FFFFFF" />}
           />
         </Card>
 
         <Card className="gap-3">
           <View className="flex-row items-center justify-between gap-2">
-            <Text className="font-heading text-base text-fg">Datos de Supabase</Text>
+            <Text className="font-pixel text-pixel-xs uppercase text-fg">Datos de Supabase</Text>
             <Badge tone={isSupabaseConfigured ? 'primary' : 'danger'}>
               {isSupabaseConfigured ? 'Conectado' : 'Sin configurar'}
             </Badge>
           </View>
 
           <View className="gap-2">
-            <View className="flex-row items-center justify-between gap-3 rounded-lg border border-line bg-bg/40 px-3 py-2">
+            <View className="flex-row items-center justify-between gap-3 border-2 border-black bg-elevated px-2.5 py-2">
               <Text className="font-body text-xs text-muted">Proyecto</Text>
               <Text className="flex-1 text-right font-mono text-xs text-fg" numberOfLines={1}>
                 {supabaseHost ?? '—'}
               </Text>
             </View>
 
-            <View className="flex-row items-center justify-between gap-3 rounded-lg border border-line bg-bg/40 px-3 py-2">
+            <View className="flex-row items-center justify-between gap-3 border-2 border-black bg-elevated px-2.5 py-2">
               <Text className="font-body text-xs text-muted">Clave anónima</Text>
               <Text className="font-body-medium text-xs text-fg">
                 {isSupabaseConfigured ? 'Configurada' : 'Falta'}
               </Text>
             </View>
 
-            <View className="flex-row items-center justify-between gap-3 rounded-lg border border-line bg-bg/40 px-3 py-2">
+            <View className="flex-row items-center justify-between gap-3 border-2 border-black bg-elevated px-2.5 py-2">
               <Text className="font-body text-xs text-muted">Versión de la app</Text>
               <Text className="font-mono text-xs text-fg">
                 {Constants.expoConfig?.version ?? '1.0.0'}
@@ -270,18 +284,13 @@ export default function AjustesScreen() {
             </View>
           </View>
 
-          <View className="gap-1.5 border-t border-line pt-3">
-            <Text className="font-body-semibold text-xs text-fg">Migraciones pendientes</Text>
+          <View className="gap-1.5 border-t-[3px] border-black pt-3">
+            <Text className="font-pixel text-pixel-2xs uppercase text-fg">Migraciones pendientes</Text>
             <Text className="font-body text-2xs leading-5 text-muted">
               Si es un proyecto nuevo, ejecutá en el SQL Editor de Supabase, en orden:
             </Text>
-            <View className="gap-1 rounded-lg border border-line bg-bg/60 p-2.5">
-              {[
-                '20261031000000_schema.sql',
-                '20261031000100_realtime_scanner.sql',
-                '20261031000200_scanner_sesiones.sql',
-                '20261031000300_reportes.sql',
-              ].map((file) => (
+            <View className="gap-1 border-[3px] border-black bg-elevated p-2.5">
+              {MIGRATIONS.map((file) => (
                 <Text key={file} className="font-mono text-2xs text-muted">
                   {file}
                 </Text>
@@ -361,8 +370,8 @@ export default function AjustesScreen() {
         }
       >
         <Text className="font-body text-sm leading-6 text-muted">
-          Se borran los datos locales de la sesión (carrito, catálogo y caja). Las ventas ya
-          registradas quedan guardadas en Supabase.
+          Se borran los datos locales de la sesión (carrito, catálogo, cuaderno y caja). Las ventas
+          ya registradas quedan guardadas en Supabase.
         </Text>
       </Modal>
     </Screen>

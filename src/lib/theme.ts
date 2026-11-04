@@ -4,24 +4,31 @@
  * ActivityIndicator, cámara, tema de navegación). Los componentes usan clases.
  */
 export const palette = {
-  bg: '#0F1419',
-  surface: '#1A1F26',
-  elevated: '#232A33',
-  fg: '#F8FAFC',
-  muted: '#94A3B8',
-  primary: '#10B981',
-  primaryFg: '#0F1419',
-  accent: '#F59E0B',
+  bg: '#F5E6C8',
+  surface: '#D1E5F0',
+  elevated: '#FFFFFF',
+  fg: '#1A1A1A',
+  muted: '#4A4A4A',
+  primary: '#4A90E2',
+  primaryFg: '#FFFFFF',
+  primaryInk: '#184E91',
+  accent: '#FACC15',
+  accentInk: '#785800',
   danger: '#EF4444',
-  dangerInk: '#F87171',
-  overlay: '#05080C',
-  line: 'rgba(255, 255, 255, 0.08)',
-  glass: 'rgba(255, 255, 255, 0.05)',
+  dangerInk: '#A01818',
+  success: '#4ADE80',
+  successInk: '#146E37',
+  pink: '#F472B6',
+  orange: '#FB923C',
+  ink: '#111111',
+  overlay: '#14181C',
+  line: '#000000',
+  glass: '#D1E5F0',
 } as const;
 
-/** Tema de React Navigation alineado al sistema de diseño. */
+/** Tema de React Navigation alineado al sistema de diseño retro. */
 export const navigationTheme = {
-  dark: true,
+  dark: false,
   colors: {
     primary: palette.primary,
     background: palette.bg,
@@ -33,7 +40,7 @@ export const navigationTheme = {
   fonts: {
     regular: { fontFamily: 'Geist_400Regular', fontWeight: '400' as const },
     medium: { fontFamily: 'Geist_500Medium', fontWeight: '500' as const },
-    bold: { fontFamily: 'SpaceGrotesk_600SemiBold', fontWeight: '600' as const },
-    heavy: { fontFamily: 'SpaceGrotesk_700Bold', fontWeight: '700' as const },
+    bold: { fontFamily: 'PressStart2P_400Regular', fontWeight: '400' as const },
+    heavy: { fontFamily: 'PressStart2P_400Regular', fontWeight: '400' as const },
   },
 };

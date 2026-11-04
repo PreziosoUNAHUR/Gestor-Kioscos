@@ -24,7 +24,7 @@ export function Money({ value, currency = 'ARS', size = 'md', className, muted =
   return (
     <Text
       className={cn(
-        'font-mono tabular-nums',
+        'font-mono-medium tabular-nums',
         SIZES[size],
         muted ? 'text-muted' : 'text-fg',
         className,

@@ -23,7 +23,7 @@ export function Screen({ children, scroll = true, className, contentClassName, b
     <View
       className={cn(
         'w-full flex-1 self-center',
-        desktop ? 'max-w-[1500px] px-8 py-8' : 'px-4 py-5',
+        desktop ? 'max-w-[1500px] px-6 py-6' : 'px-3 py-4',
         contentClassName,
       )}
     >

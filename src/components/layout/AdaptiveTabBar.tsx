@@ -11,12 +11,12 @@ type FeatherName = ComponentProps<typeof Feather>['name'];
 const NAV_ITEMS: Record<string, { label: string; icon: FeatherName }> = {
   index: { label: 'Caja', icon: 'shopping-bag' },
   productos: { label: 'Productos', icon: 'box' },
-  escaner: { label: 'Escáner', icon: 'camera' },
-  reportes: { label: 'Reportes', icon: 'bar-chart-2' },
+  cuaderno: { label: 'Cuaderno', icon: 'book-open' },
+  estadisticas: { label: 'Stats', icon: 'bar-chart-2' },
   ajustes: { label: 'Ajustes', icon: 'settings' },
 };
 
-const ORDER = ['index', 'productos', 'escaner', 'reportes', 'ajustes'];
+const ORDER = ['index', 'productos', 'cuaderno', 'estadisticas', 'ajustes'];
 
 /**
  * Barra inferior para celular/tablet (<1024px). En PC la navegación la dibuja
@@ -40,8 +40,8 @@ export function AdaptiveTabBar({ state, descriptors, insets, navigateToTab }: Bo
   });
 
   return (
-    <View className="border-t border-line bg-surface" style={{ paddingBottom: insets.bottom }}>
-      <View className="flex-row items-stretch px-1.5 pt-1.5">
+    <View className="border-t-[3px] border-black bg-bg" style={{ paddingBottom: insets.bottom }}>
+      <View className="flex-row items-stretch gap-1 px-1.5 py-1.5">
         {items.map(({ route, label, icon, focused }) => (
           <Pressable
             key={route.key}
@@ -49,13 +49,17 @@ export function AdaptiveTabBar({ state, descriptors, insets, navigateToTab }: Bo
             accessibilityState={{ selected: focused }}
             accessibilityLabel={label}
             onPress={() => navigateToTab(route.key)}
-            className="min-h-touch flex-1 items-center justify-center gap-1 py-1"
+            className={cn(
+              'min-h-touch flex-1 items-center justify-center gap-1 rounded-none border-[3px] py-1',
+              focused ? 'border-black bg-accent' : 'border-transparent',
+            )}
           >
-            <View className={cn('h-8 w-12 items-center justify-center rounded-full', focused && 'bg-primary/10')}>
-              <Feather name={icon} size={18} color={focused ? palette.primary : palette.muted} />
-            </View>
+            <Feather name={icon} size={17} color={focused ? palette.ink : palette.muted} />
             <Text
-              className={cn('font-body-medium text-2xs', focused ? 'text-primary-ink' : 'text-muted')}
+              className={cn(
+                'font-pixel text-pixel-2xs uppercase',
+                focused ? 'text-ink' : 'text-muted',
+              )}
               numberOfLines={1}
             >
               {label}

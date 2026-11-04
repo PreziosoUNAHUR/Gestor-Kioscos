@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Switch, Text, View } from 'react-native';
+import { Image, Switch, Text, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 
 import { Banner } from '@/components/ui/Banner';
@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal';
 import type { ProductoRow } from '@/lib/database.types';
 import { getErrorMessage } from '@/lib/errors';
 import { formatMoney, parseMoneyInput } from '@/lib/format';
+import { fetchOpenFoodFacts, normalizeBarcodeForLookup } from '@/lib/openfoodfacts';
 import { supabase } from '@/lib/supabase';
 import { palette } from '@/lib/theme';
 
@@ -23,6 +24,8 @@ type ProductFormModalProps = {
   onClose: () => void;
   onSaved: (producto: ProductoRow) => void;
 };
+
+type LookupState = 'idle' | 'loading' | 'found' | 'notfound' | 'error';
 
 /** Los campos de stock son enteros: "1.000" debe leerse como mil, no como uno. */
 function parseIntegerInput(text: string): number {
@@ -48,15 +51,22 @@ export function ProductFormModal({
   const [stock, setStock] = useState('0');
   const [stockMinimo, setStockMinimo] = useState('5');
   const [activo, setActivo] = useState(true);
+  const [imagenUrl, setImagenUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [confirmBaja, setConfirmBaja] = useState(false);
+  const [lookupState, setLookupState] = useState<LookupState>('idle');
+  const [lookupMessage, setLookupMessage] = useState<string | null>(null);
 
   const loadedKeyRef = useRef<string | null>(null);
+  const lookupCodeRef = useRef<string | null>(null);
+  const lookupAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!visible) {
       loadedKeyRef.current = null;
+      lookupCodeRef.current = null;
+      lookupAbortRef.current?.abort();
       return;
     }
 
@@ -69,6 +79,9 @@ export function ProductFormModal({
     setError(null);
     setLoading(false);
     setConfirmBaja(false);
+    setLookupState('idle');
+    setLookupMessage(null);
+    lookupCodeRef.current = null;
 
     if (producto) {
       setNombre(producto.nombre);
@@ -80,6 +93,7 @@ export function ProductFormModal({
       setStock(String(producto.stock));
       setStockMinimo(String(producto.stock_minimo));
       setActivo(producto.activo);
+      setImagenUrl(producto.imagen_url);
     } else {
       setNombre('');
       setCodigo('');
@@ -90,8 +104,71 @@ export function ProductFormModal({
       setStock('0');
       setStockMinimo('5');
       setActivo(true);
+      setImagenUrl(null);
     }
   }, [producto, visible]);
+
+  const lookup = async (rawCode: string, options: { overwrite?: boolean; silent?: boolean } = {}) => {
+    const code = normalizeBarcodeForLookup(rawCode);
+    if (code.length < 8) {
+      if (!options.silent) {
+        setLookupState('notfound');
+        setLookupMessage('El código debe tener al menos 8 dígitos.');
+      }
+      return;
+    }
+
+    lookupAbortRef.current?.abort();
+    const controller = new AbortController();
+    lookupAbortRef.current = controller;
+    lookupCodeRef.current = code;
+
+    setLookupState('loading');
+    setLookupMessage('Buscando en OpenFoodFacts…');
+
+    try {
+      const found = await fetchOpenFoodFacts(code, controller.signal);
+      if (controller.signal.aborted) return;
+
+      if (!found) {
+        setLookupState('notfound');
+        setLookupMessage(
+          options.silent ? null : 'No está en OpenFoodFacts. Completá el nombre a mano.',
+        );
+        return;
+      }
+
+      setLookupState('found');
+      setLookupMessage(`Encontrado: ${found.nombre}`);
+      if (options.overwrite || !nombre.trim()) setNombre(found.nombre);
+      if (options.overwrite || !categoria.trim()) {
+        if (found.categoria) setCategoria(found.categoria);
+      }
+      if (options.overwrite || !imagenUrl) {
+        if (found.imagen) setImagenUrl(found.imagen);
+      }
+    } catch {
+      if (controller.signal.aborted) return;
+      setLookupState('error');
+      setLookupMessage(options.silent ? null : 'No pudimos consultar OpenFoodFacts. Probá de nuevo.');
+    }
+  };
+
+  // Autocompletado al escanear/pegar un código nuevo. Sólo para altas y sólo
+  // si el nombre está vacío: nunca pisamos datos que el usuario ya escribió.
+  useEffect(() => {
+    if (!visible || producto) return;
+    const code = normalizeBarcodeForLookup(codigo);
+    if (code.length < 8 || nombre.trim() || lookupCodeRef.current === code) return;
+
+    const timer = setTimeout(() => {
+      void lookup(code, { silent: true });
+    }, 700);
+
+    return () => clearTimeout(timer);
+    // `lookup` usa el estado actual; el disparador es el código/visibilidad.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codigo, nombre, producto, visible]);
 
   const submit = async () => {
     if (!nombre.trim()) {
@@ -122,6 +199,7 @@ export function ProductFormModal({
             stock: stockNum,
             stock_minimo: minimo,
             activo: true,
+            imagen_url: imagenUrl,
           })
           .select(PRODUCT_COLUMNS)
           .single();
@@ -143,6 +221,7 @@ export function ProductFormModal({
           precio_venta: venta,
           stock_minimo: minimo,
           activo,
+          imagen_url: imagenUrl,
         })
         .eq('id', producto.id)
         .select(PRODUCT_COLUMNS)
@@ -196,12 +275,15 @@ export function ProductFormModal({
     }
   };
 
+  const lookupTone =
+    lookupState === 'found' ? 'success' : lookupState === 'error' ? 'danger' : 'info';
+
   return (
     <Modal
       visible={visible}
       onClose={onClose}
       title={producto ? 'Editar producto' : 'Nuevo producto'}
-      subtitle={producto ? 'Los cambios se sincronizan con la caja al instante.' : 'Cargá los datos para empezar a venderlo.'}
+      subtitle={producto ? 'Los cambios se sincronizan con la caja al instante.' : 'Escaneá el código y completá el precio.'}
       size="md"
       footer={
         <View className="gap-2">
@@ -243,7 +325,7 @@ export function ProductFormModal({
           <View className="flex-row gap-2">
             <Button label="Cancelar" variant="secondary" onPress={onClose} className="flex-1" />
             <Button
-              label={producto ? 'Guardar cambios' : 'Crear producto'}
+              label={producto ? 'Guardar' : 'Crear producto'}
               onPress={() => void submit()}
               loading={loading}
               className="flex-1"
@@ -264,7 +346,7 @@ export function ProductFormModal({
         returnKeyType="next"
       />
 
-      <View className="flex-row gap-3">
+      <View className="flex-row items-end gap-2">
         <Input
           label="Código de barras"
           value={codigo}
@@ -272,9 +354,39 @@ export function ProductFormModal({
           placeholder="7790895000017"
           autoCapitalize="none"
           autoCorrect={false}
+          keyboardType="number-pad"
           containerClassName="flex-1"
           inputClassName="font-mono"
         />
+        <Button
+          label="Buscar"
+          variant="blue"
+          size="md"
+          loading={lookupState === 'loading'}
+          onPress={() => void lookup(codigo, { overwrite: true })}
+          icon={<Feather name="search" size={14} color="#FFFFFF" />}
+        />
+      </View>
+
+      {lookupMessage ? (
+        <Banner tone={lookupTone}>{lookupMessage}</Banner>
+      ) : (
+        <Text className="font-body text-2xs leading-4 text-muted">
+          OpenFoodFacts completa el nombre y la categoría al escanear un código nuevo.
+        </Text>
+      )}
+
+      {imagenUrl ? (
+        <View className="flex-row items-center gap-3 border-[3px] border-black bg-elevated p-2">
+          <Image source={{ uri: imagenUrl }} style={{ width: 52, height: 52 }} resizeMode="contain" />
+          <Text className="flex-1 font-body text-2xs text-muted" numberOfLines={2}>
+            Imagen traída de OpenFoodFacts
+          </Text>
+          <Button label="Quitar" size="sm" variant="ghost" onPress={() => setImagenUrl(null)} />
+        </View>
+      ) : null}
+
+      <View className="flex-row gap-3">
         <Input
           label="SKU"
           value={sku}
@@ -285,19 +397,19 @@ export function ProductFormModal({
           containerClassName="flex-1"
           inputClassName="font-mono"
         />
+        <Input
+          label="Categoría"
+          value={categoria}
+          onChangeText={setCategoria}
+          placeholder="Bebidas, Golosinas…"
+          maxLength={60}
+          containerClassName="flex-1"
+        />
       </View>
-
-      <Input
-        label="Categoría"
-        value={categoria}
-        onChangeText={setCategoria}
-        placeholder="Bebidas, Golosinas, Almacén…"
-        maxLength={60}
-      />
 
       <View className="flex-row gap-3">
         <Input
-          label="Precio de venta"
+          label="Precio"
           value={precioVenta}
           onChangeText={setPrecioVenta}
           placeholder="0,00"
@@ -306,7 +418,7 @@ export function ProductFormModal({
           hint={precioVenta ? formatMoney(parseMoneyInput(precioVenta), currency) : undefined}
         />
         <Input
-          label="Precio de costo"
+          label="Costo"
           value={precioCosto}
           onChangeText={setPrecioCosto}
           placeholder="0,00"
@@ -324,7 +436,7 @@ export function ProductFormModal({
           placeholder="0"
           keyboardType="number-pad"
           containerClassName="flex-1"
-          hint="Se ajusta por RPC y queda en el kardex."
+          hint="Queda registrado en el kardex."
         />
         <Input
           label="Stock mínimo"
@@ -338,7 +450,7 @@ export function ProductFormModal({
       </View>
 
       {producto ? (
-        <View className="flex-row items-center justify-between gap-3 rounded-xl border border-line bg-bg/40 px-3 py-2.5">
+        <View className="flex-row items-center justify-between gap-3 border-[3px] border-black bg-elevated px-3 py-2.5">
           <View className="flex-1">
             <Text className="font-body-medium text-sm text-fg">Producto activo</Text>
             <Text className="font-body text-2xs text-muted">
@@ -348,8 +460,8 @@ export function ProductFormModal({
           <Switch
             value={activo}
             onValueChange={setActivo}
-            trackColor={{ false: palette.elevated, true: palette.primary }}
-            thumbColor={palette.fg}
+            trackColor={{ false: palette.muted, true: palette.success }}
+            thumbColor={palette.elevated}
           />
         </View>
       ) : null}

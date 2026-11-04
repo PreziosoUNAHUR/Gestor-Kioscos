@@ -3,6 +3,7 @@ import type { ComponentProps } from 'react';
 import { Pressable } from 'react-native';
 
 import { cn } from '@/lib/cn';
+import { pixelPressed, pixelShadow } from '@/lib/retro';
 import { palette } from '@/lib/theme';
 
 type IconButtonProps = {
@@ -15,9 +16,9 @@ type IconButtonProps = {
 };
 
 const TONES = {
-  default: { box: 'border-line bg-surface/70', color: palette.muted },
-  primary: { box: 'border-primary/30 bg-primary/10', color: palette.primary },
-  danger: { box: 'border-danger/30 bg-danger/10', color: palette.dangerInk },
+  default: { box: 'border-black bg-elevated', color: palette.fg },
+  primary: { box: 'border-black bg-success', color: palette.ink },
+  danger: { box: 'border-black bg-danger', color: '#FFFFFF' },
 } as const;
 
 export function IconButton({ name, label, onPress, tone = 'default', disabled, className }: IconButtonProps) {
@@ -29,8 +30,9 @@ export function IconButton({ name, label, onPress, tone = 'default', disabled, c
       accessibilityLabel={label}
       disabled={disabled}
       onPress={onPress}
+      style={({ pressed }) => [pixelShadow(3), pressed && !disabled ? pixelPressed(3) : undefined]}
       className={cn(
-        'h-touch w-touch items-center justify-center rounded-xl border',
+        'h-touch w-touch items-center justify-center rounded-none border-[3px]',
         styles.box,
         disabled && 'opacity-40',
         className,

@@ -25,16 +25,26 @@ export function CheckoutSuccessModal({ ticket, onClose, currency = 'ARS' }: Chec
     >
       {ticket ? (
         <>
-          <View className="items-center gap-1 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-5">
-            <View className="mb-1 h-10 w-10 items-center justify-center rounded-full bg-primary/15">
-              <Feather name="check" size={22} color={palette.primary} />
+          <View className="items-center gap-1 border-[3px] border-black bg-[#DCFCE7] px-4 py-5">
+            <View className="mb-1 h-10 w-10 items-center justify-center border-[3px] border-black bg-success">
+              <Feather name="check" size={22} color={palette.ink} />
             </View>
-            <Text className="font-body-medium text-2xs uppercase tracking-wide text-muted">Total cobrado</Text>
-            <Text className="font-mono-bold text-kpi text-primary-ink">{formatMoney(ticket.total, currency)}</Text>
+            <Text className="font-pixel text-pixel-2xs uppercase text-[#14532D]">Total cobrado</Text>
+            <Text className="font-pixel text-pixel-lg text-[#14532D]">
+              {formatMoney(ticket.total, currency)}
+            </Text>
+            {ticket.es_fiado ? (
+              <Text className="font-body text-2xs text-[#14532D]">
+                Quedó anotado en el cuaderno del cliente.
+              </Text>
+            ) : null}
           </View>
 
-          <View className="gap-2 rounded-xl border border-line bg-bg/40 p-3">
-            <Row label="Medio de pago" value={metodoPagoLabel(ticket.metodo_pago)} />
+          <View className="gap-2 border-[3px] border-black bg-elevated p-3">
+            <Row
+              label="Medio de pago"
+              value={ticket.es_fiado ? 'Fiado' : metodoPagoLabel(ticket.metodo_pago)}
+            />
             <Row label="Subtotal" value={formatMoney(ticket.subtotal, currency)} mono />
             {Number(ticket.descuento) > 0 ? (
               <Row label="Descuento" value={`- ${formatMoney(ticket.descuento, currency)}`} mono />

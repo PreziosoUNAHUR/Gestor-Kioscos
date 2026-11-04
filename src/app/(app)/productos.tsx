@@ -19,7 +19,8 @@ import { Stat } from '@/components/ui/Stat';
 import { useActiveKiosco, useEnsureCatalog } from '@/hooks/useKioscoData';
 import type { ProductoRow } from '@/lib/database.types';
 import { getErrorMessage } from '@/lib/errors';
-import { formatMoney, normalizeText } from '@/lib/format';
+import { normalizeText } from '@/lib/format';
+import { pixelPressed, pixelShadow } from '@/lib/retro';
 import { supabase } from '@/lib/supabase';
 import { palette } from '@/lib/theme';
 import { useCatalogStore } from '@/stores/catalog';
@@ -114,8 +115,6 @@ export default function ProductosScreen() {
 
   const sinStock = activeItems.filter((item) => item.stock <= 0).length;
   const stockBajo = activeItems.filter((item) => item.stock > 0 && item.stock <= item.stock_minimo).length;
-  const valorCosto = activeItems.reduce((acc, item) => acc + item.stock * Number(item.precio_costo), 0);
-  const valorVenta = activeItems.reduce((acc, item) => acc + item.stock * Number(item.precio_venta), 0);
 
   const openNew = () => {
     setEditing(null);
@@ -186,8 +185,6 @@ export default function ProductosScreen() {
           tone={stockBajo > 0 ? 'accent' : 'default'}
           className="min-w-[120px]"
         />
-        <Stat label="Valor a costo" value={formatMoney(valorCosto, currency)} className="min-w-[150px]" />
-        <Stat label="Valor a venta" value={formatMoney(valorVenta, currency)} className="min-w-[150px]" />
       </View>
 
       {catalogError ? (
@@ -274,10 +271,11 @@ export default function ProductosScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Editar ${producto.nombre}`}
                 onPress={() => openEdit(producto)}
-                className="flex-row items-center gap-3 rounded-xl border border-line bg-surface/60 px-3 py-2.5 active:opacity-80"
+                style={({ pressed }) => [pixelShadow(3), pressed ? pixelPressed(3) : undefined]}
+                className="flex-row items-center gap-3 rounded-none border-[3px] border-black bg-elevated px-2.5 py-2"
               >
-                <View className="h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                  <Feather name="box" size={16} color={palette.primary} />
+                <View className="h-9 w-9 items-center justify-center border-2 border-black bg-accent">
+                  <Feather name="box" size={16} color={palette.ink} />
                 </View>
 
                 <View className="flex-1 gap-0.5">

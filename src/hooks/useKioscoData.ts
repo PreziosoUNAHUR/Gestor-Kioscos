@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 import { useCajaStore } from '@/stores/caja';
 import { useCatalogStore } from '@/stores/catalog';
+import { useCuadernoStore } from '@/stores/cuaderno';
 import { useKioscoStore } from '@/stores/kiosco';
 import { supabase } from '@/lib/supabase';
 import type { KioscoRow, ProductoRow } from '@/lib/database.types';
@@ -16,6 +17,15 @@ export function useActiveKiosco(): KioscoRow | null {
 /** Carga el catálogo paginado cuando cambia el kiosco activo. */
 export function useEnsureCatalog(kioscoId: string | null | undefined): void {
   const load = useCatalogStore((state) => state.load);
+
+  useEffect(() => {
+    if (kioscoId) void load(kioscoId);
+  }, [kioscoId, load]);
+}
+
+/** Carga clientes y proveedores del cuaderno. */
+export function useEnsureCuaderno(kioscoId: string | null | undefined): void {
+  const load = useCuadernoStore((state) => state.load);
 
   useEffect(() => {
     if (kioscoId) void load(kioscoId);
@@ -63,6 +73,13 @@ export function useRealtimeKiosco(kioscoId: string | null | undefined): void {
         { event: '*', schema: 'public', table: 'cajas', filter: `kiosco_id=eq.${kioscoId}` },
         () => {
           void useCajaStore.getState().load(kioscoId);
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'cuaderno_contactos', filter: `kiosco_id=eq.${kioscoId}` },
+        () => {
+          void useCuadernoStore.getState().load(kioscoId, { force: true });
         },
       )
       .subscribe();

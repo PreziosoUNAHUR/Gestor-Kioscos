@@ -19,17 +19,25 @@ import { Screen } from '@/components/ui/Screen';
 import { Spinner } from '@/components/ui/Spinner';
 import { useIsDesktop } from '@/hooks/useAdaptive';
 import { useCartHydrated } from '@/hooks/useCartHydrated';
-import { useActiveKiosco, useEnsureCaja, useEnsureCatalog, useRealtimeKiosco } from '@/hooks/useKioscoData';
+import {
+  useActiveKiosco,
+  useEnsureCaja,
+  useEnsureCatalog,
+  useEnsureCuaderno,
+  useRealtimeKiosco,
+} from '@/hooks/useKioscoData';
 import { useScannerSync } from '@/hooks/useScannerSync';
-import type { MetodoPago, ProductoRow, VentaRow } from '@/lib/database.types';
+import type { ProductoRow, VentaRow } from '@/lib/database.types';
 import { getErrorMessage } from '@/lib/errors';
 import { formatMoney, normalizeText, parseMoneyInput } from '@/lib/format';
+import { pixelShadow } from '@/lib/retro';
 import type { ScanOutcome } from '@/lib/scanner';
 import { supabase } from '@/lib/supabase';
 import { palette } from '@/lib/theme';
 import { useCajaStore } from '@/stores/caja';
-import { cartCount, cartTotal, useCartStore } from '@/stores/cart';
+import { cartCount, cartTotal, useCartStore, type MetodoPagoUI } from '@/stores/cart';
 import { useCatalogStore } from '@/stores/catalog';
+import { useCuadernoStore } from '@/stores/cuaderno';
 import { useKioscoStore } from '@/stores/kiosco';
 import { usePairingStore } from '@/stores/pairing';
 
@@ -48,6 +56,7 @@ export default function CajaScreen() {
   const loadKioscos = useKioscoStore((store) => store.load);
 
   useEnsureCatalog(kioscoId);
+  useEnsureCuaderno(kioscoId);
   useEnsureCaja(kioscoId);
   useRealtimeKiosco(kioscoId);
 
@@ -62,6 +71,7 @@ export default function CajaScreen() {
   const cartKioscoId = useCartStore((store) => store.kioscoId);
   const descuento = useCartStore((store) => store.descuento);
   const metodoPago = useCartStore((store) => store.metodoPago);
+  const clienteId = useCartStore((store) => store.clienteId);
   const notas = useCartStore((store) => store.notas);
   const addProducto = useCartStore((store) => store.addProducto);
   const incrementar = useCartStore((store) => store.incrementar);
@@ -69,9 +79,12 @@ export default function CajaScreen() {
   const removeItem = useCartStore((store) => store.removeItem);
   const setDescuento = useCartStore((store) => store.setDescuento);
   const setMetodoPago = useCartStore((store) => store.setMetodoPago);
+  const setClienteId = useCartStore((store) => store.setClienteId);
   const setNotas = useCartStore((store) => store.setNotas);
   const clearCart = useCartStore((store) => store.clear);
   const hydrated = useCartHydrated();
+
+  const clientes = useCuadernoStore((store) => store.items);
 
   const caja = useCajaStore((store) => store.caja);
   const cajaLoading = useCajaStore((store) => store.loading);
@@ -171,7 +184,8 @@ export default function CajaScreen() {
   const count = cartCount(cartItems);
   const total = cartTotal(cartItems, descuento);
   const cartMismatch = Boolean(cartKioscoId && kioscoId && cartKioscoId !== kioscoId);
-  const canCheckout = Boolean(caja) && hydrated && !cartMismatch;
+  const fiadoListo = metodoPago !== 'fiado' || Boolean(clienteId);
+  const canCheckout = Boolean(caja) && hydrated && !cartMismatch && fiadoListo;
   const scanNotice = scanner.lastScan && scanner.lastScan.at > dismissedScanAt ? scanner.lastScan : null;
 
   const handleAdd = (producto: ProductoRow) => {
@@ -186,7 +200,7 @@ export default function CajaScreen() {
     setAddNotice(null);
   };
 
-  const handleMetodoChange = (value: MetodoPago) => {
+  const handleMetodoChange = (value: MetodoPagoUI) => {
     setMetodoPago(value);
     if (value !== 'efectivo') setMontoRecibido('');
   };
@@ -194,6 +208,11 @@ export default function CajaScreen() {
   const checkout = async () => {
     if (!kioscoId || !caja || cartItems.length === 0) return;
     setCheckoutError(null);
+
+    if (metodoPago === 'fiado' && !clienteId) {
+      setCheckoutError('Elegí el cliente al que le vas a fiar la venta.');
+      return;
+    }
 
     const recibido = metodoPago === 'efectivo' && montoRecibido.trim() ? parseMoneyInput(montoRecibido) : null;
     if (recibido !== null && recibido < total) {
@@ -205,10 +224,12 @@ export default function CajaScreen() {
     const { data, error } = await supabase.rpc('registrar_venta', {
       p_kiosco_id: kioscoId,
       p_items: cartItems.map((item) => ({ producto_id: item.productoId, cantidad: item.cantidad })),
-      p_metodo_pago: metodoPago,
+      // "Fiado" no existe en el enum de Postgres: se guarda como `otro` + cliente.
+      p_metodo_pago: metodoPago === 'fiado' ? 'otro' : metodoPago,
       p_descuento: descuento,
       p_monto_recibido: recibido,
       p_notas: notas.trim() || null,
+      p_cliente_id: metodoPago === 'fiado' ? clienteId : null,
     });
     setCheckoutLoading(false);
 
@@ -223,6 +244,9 @@ export default function CajaScreen() {
       const current = findById(item.productoId);
       if (current) applyStock(item.productoId, current.stock - item.cantidad);
     }
+
+    // El RPC ya movió el saldo del cliente: recargamos el cuaderno.
+    if (metodoPago === 'fiado') void useCuadernoStore.getState().load(kioscoId, { force: true });
 
     clearCart();
     setMontoRecibido('');
@@ -278,24 +302,27 @@ export default function CajaScreen() {
     );
   }
 
-  const cartPanel = (
+  const renderCartPanel = (options: { scrollItems: boolean; showHeader: boolean }) => (
     <CartPanel
       items={cartItems}
       descuento={descuento}
       metodoPago={metodoPago}
+      clienteId={clienteId}
+      clientes={clientes}
       notas={notas}
       currency={currency}
       montoRecibido={montoRecibido}
       canCheckout={canCheckout}
       checkoutLoading={checkoutLoading}
       error={checkoutError}
-      scrollItems={desktop}
-      showHeader={desktop}
+      scrollItems={options.scrollItems}
+      showHeader={options.showHeader}
       onIncrement={incrementar}
       onDecrement={decrementar}
       onRemove={removeItem}
       onDescuentoChange={setDescuento}
       onMetodoChange={handleMetodoChange}
+      onClienteChange={setClienteId}
       onNotasChange={setNotas}
       onMontoRecibidoChange={setMontoRecibido}
       onCheckout={() => void checkout()}
@@ -414,7 +441,7 @@ export default function CajaScreen() {
           ) : null}
         </View>
 
-        <View className={desktop ? 'mt-4 flex-1 flex-row gap-5' : 'mt-4 flex-1'}>
+        <View className={desktop ? 'mt-4 min-h-0 flex-1 flex-row gap-5' : 'mt-4 flex-1'}>
           <ScrollView
             className="flex-1"
             contentContainerStyle={{ paddingBottom: desktop ? 8 : 96, gap: 12 }}
@@ -450,8 +477,11 @@ export default function CajaScreen() {
           </ScrollView>
 
           {desktop ? (
-            <View className="w-[380px] shrink-0 overflow-hidden rounded-2xl border border-line bg-surface/70">
-              {cartPanel}
+            <View
+              className="min-h-0 w-[380px] shrink-0 overflow-hidden rounded-none border-[3px] border-black bg-surface"
+              style={pixelShadow(5)}
+            >
+              {renderCartPanel({ scrollItems: true, showHeader: true })}
             </View>
           ) : null}
         </View>
@@ -461,14 +491,15 @@ export default function CajaScreen() {
             accessibilityRole="button"
             accessibilityLabel="Ver carrito"
             onPress={() => setCartOpen(true)}
-            className="absolute bottom-0 left-0 right-0 flex-row items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-surface px-4 py-3"
+            style={({ pressed }) => [pixelShadow(4), pressed ? { transform: [{ translateY: 2 }] } : undefined]}
+            className="absolute bottom-0 left-0 right-0 flex-row items-center justify-between gap-3 rounded-none border-[3px] border-black bg-surface px-3 py-2.5"
           >
             <View className="flex-row items-center gap-2">
-              <View className="h-9 w-9 items-center justify-center rounded-full bg-primary/15">
-                <Feather name="shopping-cart" size={16} color={palette.primary} />
+              <View className="h-9 w-9 items-center justify-center border-2 border-black bg-accent">
+                <Feather name="shopping-cart" size={16} color={palette.ink} />
               </View>
               <View>
-                <Text className="font-body-medium text-2xs uppercase tracking-wide text-muted">Carrito</Text>
+                <Text className="font-pixel text-pixel-2xs uppercase text-muted">Carrito</Text>
                 <Text className="font-body-semibold text-sm text-fg">
                   {count} {count === 1 ? 'producto' : 'productos'}
                 </Text>
@@ -508,7 +539,7 @@ export default function CajaScreen() {
       <CheckoutSuccessModal ticket={ticket} onClose={() => setTicket(null)} currency={currency} />
 
       <Modal visible={cartOpen} onClose={() => setCartOpen(false)} title="Carrito" size="lg">
-        {cartPanel}
+        {renderCartPanel({ scrollItems: false, showHeader: false })}
       </Modal>
     </Screen>
   );

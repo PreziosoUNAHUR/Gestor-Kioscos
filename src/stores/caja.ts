@@ -8,6 +8,7 @@ export type CajaResumen = {
   ventas_cantidad: number;
   ventas_total: number;
   ventas_efectivo: number;
+  ventas_fiado: number;
   anuladas_cantidad: number;
   anuladas_total: number;
   por_metodo: Record<string, number>;
@@ -38,6 +39,7 @@ function parseResumen(value: Json | null): CajaResumen | null {
     ventas_cantidad: num('ventas_cantidad'),
     ventas_total: num('ventas_total'),
     ventas_efectivo: num('ventas_efectivo'),
+    ventas_fiado: num('ventas_fiado'),
     anuladas_cantidad: num('anuladas_cantidad'),
     anuladas_total: num('anuladas_total'),
     por_metodo,

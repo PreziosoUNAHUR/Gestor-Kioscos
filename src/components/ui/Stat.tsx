@@ -1,12 +1,13 @@
 import { Text, View } from 'react-native';
 
 import { cn } from '@/lib/cn';
+import { pixelShadow } from '@/lib/retro';
 
 type Tone = 'default' | 'primary' | 'accent' | 'danger';
 
 const VALUE_TONES: Record<Tone, string> = {
   default: 'text-fg',
-  primary: 'text-primary-ink',
+  primary: 'text-success-ink',
   accent: 'text-accent-ink',
   danger: 'text-danger-ink',
 };
@@ -21,10 +22,13 @@ type StatProps = {
 
 export function Stat({ label, value, hint, tone = 'default', className }: StatProps) {
   return (
-    <View className={cn('flex-1 gap-1 rounded-xl border border-line bg-surface/60 px-3 py-3', className)}>
-      <Text className="font-body-medium text-2xs uppercase tracking-wide text-muted">{label}</Text>
-      <Text className={cn('font-mono-medium text-lg tabular-nums', VALUE_TONES[tone])}>{value}</Text>
-      {hint ? <Text className="font-body text-2xs text-muted">{hint}</Text> : null}
+    <View
+      className={cn('flex-1 gap-1 rounded-none border-[3px] border-black bg-elevated px-2.5 py-2.5', className)}
+      style={pixelShadow(3)}
+    >
+      <Text className="font-pixel text-pixel-2xs uppercase tracking-wide text-muted">{label}</Text>
+      <Text className={cn('font-pixel text-pixel-sm tabular-nums', VALUE_TONES[tone])}>{value}</Text>
+      {hint ? <Text className="font-body text-2xs leading-4 text-muted">{hint}</Text> : null}
     </View>
   );
 }

@@ -8,6 +8,7 @@ import { supabase, syncRealtimeAuth } from '@/lib/supabase';
 import { useCajaStore } from './caja';
 import { useCartStore } from './cart';
 import { useCatalogStore } from './catalog';
+import { useCuadernoStore } from './cuaderno';
 import { useKioscoStore } from './kiosco';
 import { usePairingStore } from './pairing';
 
@@ -33,6 +34,7 @@ function clearSessionData() {
   useKioscoStore.getState().clear();
   useCatalogStore.getState().clear();
   useCartStore.getState().clear();
+  useCuadernoStore.getState().clear();
   useCajaStore.getState().clear();
   usePairingStore.getState().clear();
 }

@@ -17,19 +17,19 @@ type CajaBannerProps = {
 export function CajaBanner({ caja, loading, onAbrir, onVerTurno }: CajaBannerProps) {
   if (caja) {
     return (
-      <View className="flex-row flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+      <View className="flex-row flex-wrap items-center justify-between gap-2 border-[3px] border-black bg-[#DCFCE7] px-3 py-2">
         <View className="flex-row items-center gap-2">
-          <View className="h-2 w-2 rounded-full bg-primary" />
-          <Text className="font-body text-xs text-fg">
+          <View className="h-2.5 w-2.5 border border-black bg-success" />
+          <Text className="font-body text-xs text-[#14532D]">
             Turno abierto · {formatDateTime(caja.fecha_apertura)}
           </Text>
         </View>
         <Button
           label="Ver turno"
-          variant="ghost"
+          variant="secondary"
           size="sm"
           onPress={onVerTurno}
-          icon={<Feather name="clock" size={14} color={palette.muted} />}
+          icon={<Feather name="clock" size={14} color={palette.fg} />}
           className="px-2"
         />
       </View>

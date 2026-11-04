@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react';
+import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, type PressableProps } from 'react-native';
 
 import { cn } from '@/lib/cn';
+import { pixelPressed, pixelShadow } from '@/lib/retro';
 import { palette } from '@/lib/theme';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'accent' | 'outline';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'accent' | 'outline' | 'orange' | 'pink' | 'blue';
 type Size = 'sm' | 'md' | 'lg';
 
 type ButtonProps = Omit<PressableProps, 'children' | 'style'> & {
@@ -20,33 +21,51 @@ type ButtonProps = Omit<PressableProps, 'children' | 'style'> & {
 };
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-primary border border-primary',
-  secondary: 'bg-surface border border-line',
-  ghost: 'bg-transparent border border-transparent',
-  danger: 'bg-danger border border-danger',
-  accent: 'bg-accent border border-accent',
-  outline: 'bg-transparent border border-primary/50',
+  primary: 'bg-success border-black',
+  secondary: 'bg-elevated border-black',
+  ghost: 'bg-transparent border-transparent',
+  danger: 'bg-danger border-black',
+  accent: 'bg-accent border-black',
+  outline: 'bg-surface border-black',
+  orange: 'bg-orange border-black',
+  pink: 'bg-pink border-black',
+  blue: 'bg-primary border-black',
 };
 
 const TEXT_VARIANTS: Record<Variant, string> = {
-  primary: 'text-primary-fg',
+  primary: 'text-ink',
   secondary: 'text-fg',
-  ghost: 'text-muted',
-  danger: 'text-bg',
-  accent: 'text-primary-fg',
-  outline: 'text-primary-ink',
+  ghost: 'text-fg',
+  danger: 'text-white',
+  accent: 'text-ink',
+  outline: 'text-fg',
+  orange: 'text-ink',
+  pink: 'text-ink',
+  blue: 'text-white',
+};
+
+const ICON_COLORS: Record<Variant, string> = {
+  primary: palette.ink,
+  secondary: palette.fg,
+  ghost: palette.fg,
+  danger: '#FFFFFF',
+  accent: palette.ink,
+  outline: palette.fg,
+  orange: palette.ink,
+  pink: palette.ink,
+  blue: '#FFFFFF',
 };
 
 const SIZES: Record<Size, string> = {
-  sm: 'min-h-touch px-3',
-  md: 'min-h-touch px-4',
-  lg: 'min-h-touch-lg px-6',
+  sm: 'min-h-[36px] px-2.5 py-1.5',
+  md: 'min-h-touch px-3.5 py-2',
+  lg: 'min-h-touch-lg px-4 py-2.5',
 };
 
 const TEXT_SIZES: Record<Size, string> = {
-  sm: 'text-sm',
-  md: 'text-sm',
-  lg: 'text-base',
+  sm: 'text-pixel-2xs',
+  md: 'text-pixel-xs',
+  lg: 'text-pixel-sm',
 };
 
 export function Button({
@@ -63,15 +82,25 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const isDisabled = Boolean(disabled) || loading;
-  const spinnerColor = variant === 'primary' || variant === 'accent' || variant === 'danger' ? palette.primaryFg : palette.fg;
+  const isGhost = variant === 'ghost';
+  const iconColor = ICON_COLORS[variant];
+
+  const renderedIcon =
+    isValidElement(icon) && icon.type !== undefined
+      ? cloneElement(icon as ReactElement<{ color?: string }>, { color: iconColor })
+      : icon;
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
+      style={({ pressed }) => [
+        isGhost ? undefined : pixelShadow(4),
+        pressed && !isDisabled && !isGhost ? pixelPressed(4) : undefined,
+      ]}
       className={cn(
-        'flex-row items-center justify-center gap-2 rounded-xl',
+        'flex-row items-center justify-center gap-2 rounded-none border-[3px]',
         VARIANTS[variant],
         SIZES[size],
         fullWidth && 'w-full',
@@ -81,12 +110,22 @@ export function Button({
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={spinnerColor} />
+        <ActivityIndicator
+          size="small"
+          color={variant === 'danger' || variant === 'blue' ? '#FFFFFF' : palette.ink}
+        />
       ) : (
-        icon
+        renderedIcon
       )}
       {label ? (
-        <Text className={cn('font-body-semibold', TEXT_SIZES[size], TEXT_VARIANTS[variant], textClassName)}>
+        <Text
+          className={cn(
+            'font-pixel uppercase tracking-wide',
+            TEXT_SIZES[size],
+            TEXT_VARIANTS[variant],
+            textClassName,
+          )}
+        >
           {label}
         </Text>
       ) : (

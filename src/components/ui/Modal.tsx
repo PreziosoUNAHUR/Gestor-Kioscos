@@ -12,6 +12,7 @@ import {
 import Feather from '@expo/vector-icons/Feather';
 
 import { cn } from '@/lib/cn';
+import { pixelShadow } from '@/lib/retro';
 import { palette } from '@/lib/theme';
 
 type ModalProps = {
@@ -26,9 +27,9 @@ type ModalProps = {
 };
 
 const MAX_WIDTH: Record<NonNullable<ModalProps['size']>, number> = {
-  sm: 420,
-  md: 560,
-  lg: 760,
+  sm: 440,
+  md: 580,
+  lg: 780,
 };
 
 export function Modal({
@@ -59,44 +60,46 @@ export function Modal({
       >
         <Pressable
           accessibilityLabel="Cerrar"
-          className="absolute inset-0 bg-overlay/80"
+          className="absolute inset-0 bg-overlay/75"
           onPress={() => {
             if (dismissable) onClose();
           }}
         />
 
         <View
-          className="w-full overflow-hidden rounded-2xl border border-line bg-surface web:backdrop-blur-2xl"
-          style={{ maxWidth: MAX_WIDTH[size], maxHeight: height * 0.9 }}
+          className="w-full overflow-hidden rounded-none border-[4px] border-black bg-surface"
+          style={{ maxWidth: MAX_WIDTH[size], maxHeight: height * 0.92, ...pixelShadow(10, 'rgba(0,0,0,0.4)') }}
         >
           {title ? (
-            <View className="flex-row items-start justify-between gap-4 border-b border-line px-5 py-4">
+            <View className="flex-row items-center justify-between gap-3 border-b-[3px] border-black bg-primary px-3 py-2.5">
               <View className="flex-1 gap-0.5">
-                <Text className="font-heading text-lg text-fg">{title}</Text>
-                {subtitle ? <Text className="font-body text-xs text-muted">{subtitle}</Text> : null}
+                <Text className="font-pixel text-pixel-xs uppercase tracking-wide text-white">{title}</Text>
+                {subtitle ? <Text className="font-body text-2xs text-white/90">{subtitle}</Text> : null}
               </View>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Cerrar"
                 onPress={onClose}
                 hitSlop={8}
-                className="h-9 w-9 items-center justify-center rounded-lg border border-line bg-bg/50"
+                className="h-8 w-8 items-center justify-center rounded-none border-[3px] border-black bg-accent active:translate-x-0.5 active:translate-y-0.5"
               >
-                <Feather name="x" size={16} color={palette.muted} />
+                <Feather name="x" size={15} color={palette.ink} />
               </Pressable>
             </View>
           ) : null}
 
           <ScrollView
             className="shrink"
-            contentContainerStyle={{ padding: 20, gap: 14 }}
+            contentContainerStyle={{ padding: 16, gap: 14 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
             {children}
           </ScrollView>
 
-          {footer ? <View className={cn('border-t border-line px-5 py-4')}>{footer}</View> : null}
+          {footer ? (
+            <View className={cn('border-t-[3px] border-black bg-bg px-4 py-3')}>{footer}</View>
+          ) : null}
         </View>
       </KeyboardAvoidingView>
     </RNModal>

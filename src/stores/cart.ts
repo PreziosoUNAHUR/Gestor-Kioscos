@@ -13,13 +13,17 @@ export type CartItem = {
   stock: number;
 };
 
+/** "Fiado" no es un valor del enum de Postgres: se guarda como `otro` + cliente. */
+export type MetodoPagoUI = MetodoPago | 'fiado';
+
 export type AddResult = { ok: boolean; cantidad: number; message?: string };
 
 type CartState = {
   kioscoId: string | null;
   items: CartItem[];
   descuento: number;
-  metodoPago: MetodoPago;
+  metodoPago: MetodoPagoUI;
+  clienteId: string | null;
   notas: string;
 
   addProducto: (producto: ProductoRow, cantidad?: number) => AddResult;
@@ -28,7 +32,8 @@ type CartState = {
   decrementar: (productoId: string) => void;
   removeItem: (productoId: string) => void;
   setDescuento: (value: number) => void;
-  setMetodoPago: (metodo: MetodoPago) => void;
+  setMetodoPago: (metodo: MetodoPagoUI) => void;
+  setClienteId: (clienteId: string | null) => void;
   setNotas: (notas: string) => void;
   clear: () => void;
 };
@@ -55,7 +60,8 @@ const emptyCart = {
   kioscoId: null as string | null,
   items: [] as CartItem[],
   descuento: 0,
-  metodoPago: 'efectivo' as MetodoPago,
+  metodoPago: 'efectivo' as MetodoPagoUI,
+  clienteId: null as string | null,
   notas: '',
 };
 
@@ -98,8 +104,9 @@ export const useCartStore = create<CartState>()(
         set({
           kioscoId: producto.kiosco_id,
           items,
-          // Si cambiamos de kiosco, el descuento anterior no aplica.
+          // Si cambiamos de kiosco, el descuento y el cliente anterior no aplican.
           descuento: state.kioscoId && state.kioscoId !== producto.kiosco_id ? 0 : state.descuento,
+          clienteId: state.kioscoId && state.kioscoId !== producto.kiosco_id ? null : state.clienteId,
         });
 
         if (producto.stock <= 0) {
@@ -144,7 +151,10 @@ export const useCartStore = create<CartState>()(
         set({ descuento });
       },
 
-      setMetodoPago: (metodoPago) => set({ metodoPago }),
+      setMetodoPago: (metodoPago) =>
+        set({ metodoPago, clienteId: metodoPago === 'fiado' ? get().clienteId : null }),
+
+      setClienteId: (clienteId) => set({ clienteId }),
 
       setNotas: (notas) => set({ notas: notas.slice(0, 280) }),
 
@@ -159,6 +169,7 @@ export const useCartStore = create<CartState>()(
         items: state.items,
         descuento: state.descuento,
         metodoPago: state.metodoPago,
+        clienteId: state.clienteId,
         notas: state.notas,
       }),
     },

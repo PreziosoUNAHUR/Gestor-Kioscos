@@ -34,7 +34,7 @@ export default function RootLayout() {
   if (!isSupabaseConfigured) {
     return (
       <SafeAreaProvider>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <ConfigNotice />
       </SafeAreaProvider>
     );
@@ -47,7 +47,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider value={navigationTheme}>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <Stack
           screenOptions={{
             headerShown: false,
