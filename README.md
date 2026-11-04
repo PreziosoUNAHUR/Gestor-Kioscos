@@ -66,6 +66,16 @@ una interfaz retro/pixel-art consistente.
    supabase/migrations/20261104000100_estadisticas.sql
    ```
 
+   > **Si la app muestra `Could not find the table … in the schema cache` o
+   > `Could not find the function … in the schema cache`**, falta ejecutar la migración
+   > correspondiente en ese proyecto de Supabase. Copiá el archivo completo en el
+   > **SQL Editor** y presioná **Run**. Después, si el error persiste, recargá la caché de
+   > PostgREST:
+   >
+   > ```sql
+   > notify pgrst, 'reload schema';
+   > ```
+
 4. En Supabase → **Realtime → Settings**, desactivá **Allow public access**. Los canales del
    escáner son privados y usan RLS con el JWT del usuario.
 
